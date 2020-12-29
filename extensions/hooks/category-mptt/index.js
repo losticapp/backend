@@ -24,8 +24,6 @@ async function applyMPTT(database) {
 module.exports = function registerHook(context) {
   return {
     'items.*': async function (meta) {
-      console.log('after all the item events:', meta)
-
       if (meta.collection === 'category') {
         await applyMPTT(context.database)
       }
