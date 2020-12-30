@@ -3,20 +3,32 @@
   "version": "0.1.0",
   "description": "",
   "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/losticapp/lostic"
+  },
   "scripts": {
     "start": "directus start",
+    "migrate": "migrate",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "directus": "^9.0.0-rc.26",
+    "axios": "^0.21.1",
+    "directus": "^9.0.0-rc.27",
+    "dotenv": "^8.2.0",
     "express-async-handler": "^1.1.4",
     "lodash": "^4.17.20",
+    "migrate": "^1.7.0",
     "mysql": "^2.18.1"
   },
   "devDependencies": {
-    "@types/lodash": "^4.14.166"
+    "@types/axios": "^0.14.0",
+    "@types/dotenv": "^8.2.0",
+    "@types/get-port": "^4.2.0",
+    "@types/lodash": "^4.14.166",
+    "get-port": "^5.1.1"
   }
 }

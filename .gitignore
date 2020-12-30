@@ -1,3 +1,6 @@
+# migrations https://github.com/tj/node-migrate
+.migrate
+
 # Logs
 logs
 *.log
