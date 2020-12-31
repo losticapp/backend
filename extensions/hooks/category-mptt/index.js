@@ -5,13 +5,13 @@ async function updateCategoryLeftRightValues(tree, database) {
     const node = tree[i]
     const { subCategories } = node
 
-    await database.table('category').update({ lft: node.lft, rgt: node.rgt }).where('id', '=', node.id)
+    await database.table('categories').update({ lft: node.lft, rgt: node.rgt }).where('id', '=', node.id)
     await updateCategoryLeftRightValues(subCategories, database)
   }
 }
 
 async function applyMPTT(database) {
-  const categories = await database.table('category').select()
+  const categories = await database.table('categories').select()
   const tree = mptt.buildTree(categories)
 
   // apply mptt algorithm
@@ -24,7 +24,7 @@ async function applyMPTT(database) {
 module.exports = function registerHook(context) {
   return {
     'items.*': async function (meta) {
-      if (meta.collection === 'category') {
+      if (meta.collection === 'categories') {
         await applyMPTT(context.database)
       }
     },
