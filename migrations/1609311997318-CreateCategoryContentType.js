@@ -10,8 +10,8 @@ module.exports.up = function (next) {
     }
 
     await axios.post(`${meta.addr}/collections`, createCategoryCollectionData, opts)
-    await axios.post(`${meta.addr}/fields/category`, addParentCategoryFieldData, opts)
-    await axios.post(`${meta.addr}/fields/category`, addSubCategoriesFieldData, opts)
+    await axios.post(`${meta.addr}/fields/categories`, addParentCategoryFieldData, opts)
+    await axios.post(`${meta.addr}/fields/categories`, addSubCategoriesFieldData, opts)
     await axios.post(`${meta.addr}/relations`, addParentCategorySubCategoriesRelationData, opts)
   })
     .then(next)
@@ -24,14 +24,14 @@ module.exports.down = function (next) {
       headers: meta.authHeaders
     }
 
-    await axios.delete(`${meta.addr}/collections/category`, opts)
+    await axios.delete(`${meta.addr}/collections/categories`, opts)
   })
     .then(next)
     .catch(next)
 }
 
 const createCategoryCollectionData = {
-  "collection": "category",
+  "collection": "categories",
   "fields": [
     {
       "field": "id",
@@ -412,7 +412,7 @@ const addParentCategoryFieldData = {
 
 const addSubCategoriesFieldData = {
   "field": "sub_categories",
-  "collection": "category",
+  "collection": "categories",
   "meta": {
       "special": "o2m",
       "interface": "one-to-many",
@@ -430,10 +430,10 @@ const addSubCategoriesFieldData = {
 }
 
 const addParentCategorySubCategoriesRelationData = {
-  "many_collection": "category",
+  "many_collection": "categories",
   "many_field": "parent_category",
   "many_primary": "id",
-  "one_collection": "category",
+  "one_collection": "categories",
   "one_primary": "id",
   "one_field": "sub_categories"
 }

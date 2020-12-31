@@ -11,7 +11,7 @@ module.exports.up = function (next) {
 
     await axios.post(`${meta.addr}/collections`, createNoticeCollectionData, opts)
     // category field
-    await axios.post(`${meta.addr}/fields/notice`, addCategoryFieldData, opts)
+    await axios.post(`${meta.addr}/fields/notices`, addCategoryFieldData, opts)
     await axios.post(`${meta.addr}/relations`, addCategoryRelationData, opts)
     // images field
     await axios.post(`${meta.addr}/collections`, createNoticeDirectusFilesCollectionData, opts)
@@ -28,7 +28,7 @@ module.exports.down = function (next) {
       headers: meta.authHeaders
     }
 
-    await axios.delete(`${meta.addr}/collections/notice`, opts)
+    await axios.delete(`${meta.addr}/collections/notices`, opts)
     await axios.delete(`${meta.addr}/collections/${createNoticeDirectusFilesCollectionData.collection}`, opts)
   })
     .then(next)
@@ -36,15 +36,15 @@ module.exports.down = function (next) {
 }
 
 const createNoticeCollectionData = {
-  "collection": "notice",
+  "collection": "notices",
   "fields": [
     {
-      "collection": "notice",
+      "collection": "notices",
       "field": "title",
       "type": "string",
       "schema": {
         "name": "title",
-        "table": "notice",
+        "table": "notices",
         "data_type": "varchar",
         "default_value": null,
         "max_length": 255,
@@ -58,7 +58,7 @@ const createNoticeCollectionData = {
         "comment": ""
       },
       "meta": {
-        "collection": "notice",
+        "collection": "notices",
         "display": "raw",
         "display_options": null,
         "field": "title",
@@ -106,12 +106,12 @@ const createNoticeCollectionData = {
       }
     },
     {
-      "collection": "notice",
+      "collection": "notices",
       "field": "date_created",
       "type": "timestamp",
       "schema": {
         "name": "date_created",
-        "table": "notice",
+        "table": "notices",
         "data_type": "timestamp",
         "default_value": null,
         "max_length": null,
@@ -125,7 +125,7 @@ const createNoticeCollectionData = {
         "comment": ""
       },
       "meta": {
-        "collection": "notice",
+        "collection": "notices",
         "display": "datetime",
         "display_options": {
           "relative": true
@@ -148,12 +148,12 @@ const createNoticeCollectionData = {
       }
     },
     {
-      "collection": "notice",
+      "collection": "notices",
       "field": "date_updated",
       "type": "timestamp",
       "schema": {
         "name": "date_updated",
-        "table": "notice",
+        "table": "notices",
         "data_type": "timestamp",
         "default_value": null,
         "max_length": null,
@@ -167,7 +167,7 @@ const createNoticeCollectionData = {
         "comment": ""
       },
       "meta": {
-        "collection": "notice",
+        "collection": "notices",
         "display": "datetime",
         "display_options": {
           "relative": true
@@ -190,12 +190,12 @@ const createNoticeCollectionData = {
       }
     },
     {
-      "collection": "notice",
+      "collection": "notices",
       "field": "description",
       "type": "text",
       "schema": {
         "name": "description",
-        "table": "notice",
+        "table": "notices",
         "data_type": "text",
         "default_value": null,
         "max_length": 65535,
@@ -209,7 +209,7 @@ const createNoticeCollectionData = {
         "comment": ""
       },
       "meta": {
-        "collection": "notice",
+        "collection": "notices",
         "display": "raw",
         "display_options": null,
         "field": "description",
@@ -237,12 +237,12 @@ const createNoticeCollectionData = {
       }
     },
     {
-      "collection": "notice",
+      "collection": "notices",
       "field": "id",
       "type": "integer",
       "schema": {
         "name": "id",
-        "table": "notice",
+        "table": "notices",
         "data_type": "int",
         "default_value": null,
         "max_length": null,
@@ -256,7 +256,7 @@ const createNoticeCollectionData = {
         "comment": ""
       },
       "meta": {
-        "collection": "notice",
+        "collection": "notices",
         "display": null,
         "display_options": null,
         "field": "id",
@@ -275,12 +275,12 @@ const createNoticeCollectionData = {
       }
     },
     {
-      "collection": "notice",
+      "collection": "notices",
       "field": "user_created",
       "type": "string",
       "schema": {
         "name": "user_created",
-        "table": "notice",
+        "table": "notices",
         "data_type": "char",
         "default_value": null,
         "max_length": 36,
@@ -294,7 +294,7 @@ const createNoticeCollectionData = {
         "comment": ""
       },
       "meta": {
-        "collection": "notice",
+        "collection": "notices",
         "display": "user",
         "display_options": null,
         "field": "user_created",
@@ -317,12 +317,12 @@ const createNoticeCollectionData = {
       }
     },
     {
-      "collection": "notice",
+      "collection": "notices",
       "field": "user_updated",
       "type": "string",
       "schema": {
         "name": "user_updated",
-        "table": "notice",
+        "table": "notices",
         "data_type": "char",
         "default_value": null,
         "max_length": 36,
@@ -336,7 +336,7 @@ const createNoticeCollectionData = {
         "comment": ""
       },
       "meta": {
-        "collection": "notice",
+        "collection": "notices",
         "display": "user",
         "display_options": null,
         "field": "user_updated",
@@ -448,10 +448,10 @@ const addCategoryFieldData = {
 }
 
 const addCategoryRelationData = {
-  "many_collection": "notice",
+  "many_collection": "notices",
   "many_field": "category",
   "many_primary": "id",
-  "one_collection": "category",
+  "one_collection": "categories",
   "one_primary": "id"
 }
 
@@ -496,7 +496,7 @@ const addNoticeFileRelationData = {
   "many_collection": createNoticeDirectusFilesCollectionData.collection,
   "many_field": "notice_id",
   "many_primary": "id",
-  "one_collection": "notice",
+  "one_collection": "notices",
   "one_field": "images",
   "one_primary": "id"
 }
