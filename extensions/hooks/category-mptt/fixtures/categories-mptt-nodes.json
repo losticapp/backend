@@ -1,0 +1,89 @@
+[
+  {
+    "id": 1,
+    "record": {
+      "id": 1,
+      "title": "Electronics",
+      "parent_category": null,
+      "ordering_number": 0
+    },
+    "subCategories": [
+      {
+        "id": 2,
+        "record": {
+          "id": 2,
+          "title": "Televisions",
+          "parent_category": 1,
+          "ordering_number": 0
+        },
+        "subCategories": [
+          {
+            "id": 5,
+            "record": {
+              "id": 5,
+              "title": "PLASMA",
+              "parent_category": 2,
+              "ordering_number": 1
+            },
+            "subCategories": [],
+            "lft": 3,
+            "rgt": 4
+          },
+          {
+            "id": 4,
+            "record": {
+              "id": 4,
+              "title": "LCD",
+              "parent_category": 2,
+              "ordering_number": 2
+            },
+            "subCategories": [],
+            "lft": 5,
+            "rgt": 6
+          },
+          {
+            "id": 3,
+            "record": {
+              "id": 3,
+              "title": "Tube",
+              "parent_category": 2,
+              "ordering_number": 3
+            },
+            "subCategories": [],
+            "lft": 7,
+            "rgt": 8
+          }
+        ],
+        "lft": 2,
+        "rgt": 9
+      },
+      {
+        "id": 6,
+        "record": {
+          "id": 6,
+          "title": "Portable Electronics",
+          "parent_category": 1,
+          "ordering_number": 0
+        },
+        "subCategories": [
+          {
+            "id": 7,
+            "record": {
+              "id": 7,
+              "title": "MP3 Players",
+              "parent_category": 6,
+              "ordering_number": 0
+            },
+            "subCategories": [],
+            "lft": 11,
+            "rgt": 12
+          }
+        ],
+        "lft": 10,
+        "rgt": 13
+      }
+    ],
+    "lft": 1,
+    "rgt": 14
+  }
+]

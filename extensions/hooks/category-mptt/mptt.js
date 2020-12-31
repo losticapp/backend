@@ -31,12 +31,10 @@ function findNode(tree, nodeId) {
     }
 
     // recursively walk over the sub categories
-    if (subCategories) {
-      const matchingSubCategory = findNode(subCategories, nodeId)
+    const matchingSubCategory = findNode(subCategories, nodeId)
 
-      if (matchingSubCategory) {
-        return matchingSubCategory
-      }
+    if (matchingSubCategory) {
+      return matchingSubCategory
     }
   }
 
