@@ -1,38 +1,43 @@
 'use strict'
 require('dotenv').config()
-const axios = require('axios').default
-const { runInAdminContext } = require('../utils/migrations/run-in-admin-context')
+const directus = require('directus')
+const database = require('directus/dist/database')
 
 module.exports.up = function (next) {
-  runInAdminContext(async meta => {
-    const opts = {
-      headers: meta.authHeaders
-    }
+  Promise.resolve((async () => {
+    let schema = await database.schemaInspector.overview()
+    const collectionsService = new directus.CollectionsService({ schema })
 
-    await axios.post(`${meta.addr}/collections`, createNoticeCollectionData, opts)
+    await collectionsService.create(createNoticeCollectionData)
+
+    // update schema
+    schema = await database.schemaInspector.overview()
+
+    // add parent category
+    const fieldsService = new directus.FieldsService({ schema })
+    const relationsService = new directus.RelationsService({ schema })
+
     // category field
-    await axios.post(`${meta.addr}/fields/notices`, addCategoryFieldData, opts)
-    await axios.post(`${meta.addr}/relations`, addCategoryRelationData, opts)
+    await fieldsService.createField('notices', addCategoryFieldData)
+    await relationsService.create(addCategoryRelationData)
     // images field
-    await axios.post(`${meta.addr}/collections`, createNoticeDirectusFilesCollectionData, opts)
-    await axios.post(`${meta.addr}/relations`, addNoticeFileRelationData, opts)
-    await axios.post(`${meta.addr}/relations`, addFileRelationData, opts)
-  })
+    await collectionsService.create(createNoticeDirectusFilesCollectionData)
+    await relationsService.create(addNoticeFileRelationData)
+    await relationsService.create(addFileRelationData)
+  })())
     .then(next)
     .catch(next)
 }
 
 module.exports.down = function (next) {
-  runInAdminContext(async meta => {
-    const opts = {
-      headers: meta.authHeaders
-    }
-
-    await axios.delete(`${meta.addr}/collections/notices`, opts)
-    await axios.delete(`${meta.addr}/collections/${createNoticeDirectusFilesCollectionData.collection}`, opts)
-  })
-    .then(next)
-    .catch(next)
+  database.schemaInspector.overview().then(async schema => {
+      const collectionsService = new directus.CollectionsService({ schema })
+  
+      await collectionsService.delete('notices')
+      await collectionsService.delete(createNoticeDirectusFilesCollectionData.collection)
+    })
+      .then(next)
+      .catch(next)
 }
 
 const createNoticeCollectionData = {

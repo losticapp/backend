@@ -1,30 +1,35 @@
 'use strict'
 require('dotenv').config()
-const axios = require('axios').default
-const { runInAdminContext } = require('../utils/migrations/run-in-admin-context')
+const directus = require('directus')
+const database = require('directus/dist/database')
 
 module.exports.up = function (next) {
-  runInAdminContext(async meta => {
-    const opts = {
-      headers: meta.authHeaders
-    }
+  Promise.resolve((async () => {
+    let schema = await database.schemaInspector.overview()
+    const collectionsService = new directus.CollectionsService({ schema })
 
-    await axios.post(`${meta.addr}/collections`, createCategoryCollectionData, opts)
-    await axios.post(`${meta.addr}/fields/categories`, addParentCategoryFieldData, opts)
-    await axios.post(`${meta.addr}/fields/categories`, addSubCategoriesFieldData, opts)
-    await axios.post(`${meta.addr}/relations`, addParentCategorySubCategoriesRelationData, opts)
-  })
+    await collectionsService.create(createCategoryCollectionData)
+
+    // update schema
+    schema = await database.schemaInspector.overview()
+
+    // add parent category
+    const fieldsService = new directus.FieldsService({ schema })
+    const relationsService = new directus.RelationsService({ schema })
+
+    await fieldsService.createField('categories', addParentCategoryFieldData)
+    await fieldsService.createField('categories', addSubCategoriesFieldData)
+    await relationsService.create(addParentCategorySubCategoriesRelationData)
+  })())
     .then(next)
     .catch(next)
 }
 
 module.exports.down = function (next) {
-  runInAdminContext(async meta => {
-    const opts = {
-      headers: meta.authHeaders
-    }
+  database.schemaInspector.overview().then(async schema => {
+    const collectionsService = new directus.CollectionsService({ schema })
 
-    await axios.delete(`${meta.addr}/collections/categories`, opts)
+    await collectionsService.delete('categories')
   })
     .then(next)
     .catch(next)
