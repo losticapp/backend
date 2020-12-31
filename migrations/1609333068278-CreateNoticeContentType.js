@@ -418,7 +418,7 @@ const createNoticeCollectionData = {
     }
   ],
   "meta": {
-    "singleton": true
+    "singleton": false
   }
 }
 
