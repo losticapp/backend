@@ -18,7 +18,7 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^0.21.1",
-    "directus": "^9.0.0-rc.27",
+    "directus": "^9.0.0-rc.28",
     "dotenv": "^8.2.0",
     "express-async-handler": "^1.1.4",
     "lodash": "^4.17.20",
