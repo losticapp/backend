@@ -3,515 +3,73 @@ require('dotenv').config()
 const directus = require('directus')
 const database = require('directus/dist/database')
 
+const data = {
+  collections: {
+    notices: {"collection":"notices","fields":[{"field":"id","type":"integer","meta":{"hidden":true,"interface":"numeric","readonly":true},"schema":{"is_primary_key":true,"has_auto_increment":true}},{"field":"user_created","type":"uuid","meta":{"special":["user-created"],"interface":"user","options":{"display":"both"},"display":"user","readonly":true,"hidden":true,"width":"half"},"schema":{}},{"field":"date_created","type":"timestamp","meta":{"special":["date-created"],"interface":"datetime","readonly":true,"hidden":true,"width":"half","display":"datetime","display_options":{"relative":true}},"schema":{}},{"field":"user_updated","type":"uuid","meta":{"special":["user-updated"],"interface":"user","options":{"display":"both"},"display":"user","readonly":true,"hidden":true,"width":"half"},"schema":{}},{"field":"date_updated","type":"timestamp","meta":{"special":["date-updated"],"interface":"datetime","readonly":true,"hidden":true,"width":"half","display":"datetime","display_options":{"relative":true}},"schema":{}}],"meta":{"singleton":false}},
+    noticeImages: {"collection":"notices_directus_files_notice_images","meta":{"hidden":true,"icon":"import_export"},"fields":[{"field":"id","type":"integer","schema":{"has_auto_increment":true},"meta":{"hidden":true}}]},
+  },
+  fields: {
+    title: {"field":"title","type":"string","schema":{"is_nullable":false,"numeric_precision":null,"numeric_scale":null},"meta":{"hidden":false,"interface":"text-input","options":{"trim":true},"display":"raw","readonly":false,"translations":[{"language":"en-US","translation":"Title"},{"language":"tr-TR","translation":"Başlık"}]}},
+    description: {"field":"description","type":"text","schema":{"is_nullable":true,"numeric_precision":null,"numeric_scale":null},"meta":{"hidden":false,"interface":"wysiwyg","options":null,"display":"raw","display_options":null,"readonly":false,"special":null,"translations":[{"language":"en-US","translation":"Description"},{"language":"tr-TR","translation":"Açıklama"}]}},
+    category: {"field":"category","type":"integer","schema":{"is_nullable":false,"numeric_precision":null,"numeric_scale":null},"meta":{"hidden":false,"interface":"many-to-one","options":{"template":"{{title}}"},"display":"related-values","display_options":{"template":"{{title}}"},"readonly":false,"translations":[{"language":"en-US","translation":"Category"},{"language":"tr-TR","translation":"Kategori"}]}},
+    images: {"field":"images","type":null,"meta":{"hidden":false,"interface":"files","display":"raw","readonly":false,"special":["files"],"translations":[{"language":"en-US","translation":"Images"},{"language":"tr-TR","translation":"Resimler"}]}},
+    noticeImages: {
+      noticesId: {"collection":"notices_directus_files_notice_images","field":"notices_id","type":"integer","schema":{},"meta":{"hidden":true}},
+      filesId: {"collection":"notices_directus_files_notice_images","field":"directus_files_id","type":"uuid","schema":{},"meta":{"hidden":true}},
+    },
+  },
+  relations: {
+    notice: {
+      user: [{"many_collection":"notices","many_field":"user_created","many_primary":"id","one_collection":"directus_users","one_primary":"id"},{"many_collection":"notices","many_field":"user_updated","many_primary":"id","one_collection":"directus_users","one_primary":"id"}],
+      category: {"many_collection":"notices","many_field":"category","many_primary":"id","one_collection":"categories","one_primary":"id"},
+    },
+    noticeImages: {
+      images: {"many_collection":"notices_directus_files_notice_images","many_field":"notices_id","many_primary":"id","one_collection":"notices","one_field":"images","one_primary":"id","junction_field":"directus_files_id"},
+      files: {"many_collection":"notices_directus_files_notice_images","many_field":"directus_files_id","many_primary":"id","one_collection":"directus_files","one_field":null,"one_primary":"id","junction_field":"notices_id"},
+    }
+  },
+}
+
 module.exports.up = function (next) {
   Promise.resolve((async () => {
+    let fieldsService = null
+    let relationsService = null
     let schema = await database.schemaInspector.overview()
     const collectionsService = new directus.CollectionsService({ schema })
+    
+    await collectionsService.create(data.collections.notices)
+    await collectionsService.create(data.collections.noticeImages)
 
-    await collectionsService.create(createNoticeCollectionData)
-
-    // update schema
     schema = await database.schemaInspector.overview()
+    fieldsService = new directus.FieldsService({ schema })
+    relationsService = new directus.RelationsService({ schema })
+    
+    await fieldsService.createField(data.collections.notices.collection, data.fields.title)
+    await fieldsService.createField(data.collections.notices.collection, data.fields.description)
+    await fieldsService.createField(data.collections.notices.collection, data.fields.category)
+    await fieldsService.createField(data.collections.notices.collection, data.fields.images)
 
-    // add parent category
-    const fieldsService = new directus.FieldsService({ schema })
-    const relationsService = new directus.RelationsService({ schema })
+    await fieldsService.createField(data.collections.noticeImages.collection, data.fields.noticeImages.noticesId)
+    await fieldsService.createField(data.collections.noticeImages.collection, data.fields.noticeImages.filesId)
 
-    // category field
-    await fieldsService.createField('notices', addCategoryFieldData)
-    await relationsService.create(addCategoryRelationData)
-    // images field
-    await collectionsService.create(createNoticeDirectusFilesCollectionData)
-    await relationsService.create(addNoticeFileRelationData)
-    await relationsService.create(addFileRelationData)
+    await relationsService.create(data.relations.notice.user)
+    await relationsService.create(data.relations.notice.category)
+
+    await relationsService.create(data.relations.noticeImages.images)
+    await relationsService.create(data.relations.noticeImages.files)
   })())
     .then(next)
     .catch(next)
 }
 
 module.exports.down = function (next) {
-  database.schemaInspector.overview().then(async schema => {
-      const collectionsService = new directus.CollectionsService({ schema })
-  
-      await collectionsService.delete('notices')
-      await collectionsService.delete(createNoticeDirectusFilesCollectionData.collection)
-    })
-      .then(next)
-      .catch(next)
-}
+  Promise.resolve((async () => {
+    const schema = await database.schemaInspector.overview()
+    const collectionsService = new directus.CollectionsService({ schema })
 
-const createNoticeCollectionData = {
-  "collection": "notices",
-  "fields": [
-    {
-      "collection": "notices",
-      "field": "title",
-      "type": "string",
-      "schema": {
-        "name": "title",
-        "table": "notices",
-        "data_type": "varchar",
-        "default_value": null,
-        "max_length": 255,
-        "numeric_precision": null,
-        "numeric_scale": null,
-        "is_nullable": false,
-        "is_primary_key": false,
-        "has_auto_increment": false,
-        "foreign_key_column": null,
-        "foreign_key_table": null,
-        "comment": ""
-      },
-      "meta": {
-        "collection": "notices",
-        "display": "raw",
-        "display_options": null,
-        "field": "title",
-        "group": null,
-        "hidden": false,
-        "id": 88,
-        "interface": "text-input",
-        "locked": false,
-        "note": null,
-        "options": {
-          "trim": true
-        },
-        "readonly": false,
-        "sort": 2,
-        "special": null,
-        "translations": [
-          {
-            "language": "en-US",
-            "translation": "Title"
-          },
-          {
-            "language": "tr-TR",
-            "translation": "Başlık"
-          }
-        ],
-        "width": "full"
-      }
-    },
-    {
-      "field": "images",
-      "type": null,
-      "meta": {
-        "hidden": false,
-        "interface": "files",
-        "display": "raw",
-        "readonly": false,
-        "special": ["files"],
-        "translations": [{
-          "language": "en-US",
-          "translation": "Images"
-        }, {
-          "language": "tr-TR",
-          "translation": "Resimler"
-        }]
-      }
-    },
-    {
-      "collection": "notices",
-      "field": "date_created",
-      "type": "timestamp",
-      "schema": {
-        "name": "date_created",
-        "table": "notices",
-        "data_type": "timestamp",
-        "default_value": null,
-        "max_length": null,
-        "numeric_precision": null,
-        "numeric_scale": null,
-        "is_nullable": true,
-        "is_primary_key": false,
-        "has_auto_increment": false,
-        "foreign_key_column": null,
-        "foreign_key_table": null,
-        "comment": ""
-      },
-      "meta": {
-        "collection": "notices",
-        "display": "datetime",
-        "display_options": {
-          "relative": true
-        },
-        "field": "date_created",
-        "group": null,
-        "hidden": true,
-        "id": 85,
-        "interface": "datetime",
-        "locked": false,
-        "note": null,
-        "options": null,
-        "readonly": true,
-        "sort": 5,
-        "special": [
-          "date-created"
-        ],
-        "translations": null,
-        "width": "half"
-      }
-    },
-    {
-      "collection": "notices",
-      "field": "date_updated",
-      "type": "timestamp",
-      "schema": {
-        "name": "date_updated",
-        "table": "notices",
-        "data_type": "timestamp",
-        "default_value": null,
-        "max_length": null,
-        "numeric_precision": null,
-        "numeric_scale": null,
-        "is_nullable": true,
-        "is_primary_key": false,
-        "has_auto_increment": false,
-        "foreign_key_column": null,
-        "foreign_key_table": null,
-        "comment": ""
-      },
-      "meta": {
-        "collection": "notices",
-        "display": "datetime",
-        "display_options": {
-          "relative": true
-        },
-        "field": "date_updated",
-        "group": null,
-        "hidden": true,
-        "id": 87,
-        "interface": "datetime",
-        "locked": false,
-        "note": null,
-        "options": null,
-        "readonly": true,
-        "sort": 7,
-        "special": [
-          "date-updated"
-        ],
-        "translations": null,
-        "width": "half"
-      }
-    },
-    {
-      "collection": "notices",
-      "field": "description",
-      "type": "text",
-      "schema": {
-        "name": "description",
-        "table": "notices",
-        "data_type": "text",
-        "default_value": null,
-        "max_length": 65535,
-        "numeric_precision": null,
-        "numeric_scale": null,
-        "is_nullable": true,
-        "is_primary_key": false,
-        "has_auto_increment": false,
-        "foreign_key_column": null,
-        "foreign_key_table": null,
-        "comment": ""
-      },
-      "meta": {
-        "collection": "notices",
-        "display": "raw",
-        "display_options": null,
-        "field": "description",
-        "group": null,
-        "hidden": false,
-        "id": 89,
-        "interface": "wysiwyg",
-        "locked": false,
-        "note": null,
-        "options": null,
-        "readonly": false,
-        "sort": 3,
-        "special": null,
-        "translations": [
-          {
-            "language": "en-US",
-            "translation": "Description"
-          },
-          {
-            "language": "tr-TR",
-            "translation": "Açıklama"
-          }
-        ],
-        "width": "full"
-      }
-    },
-    {
-      "collection": "notices",
-      "field": "id",
-      "type": "integer",
-      "schema": {
-        "name": "id",
-        "table": "notices",
-        "data_type": "int",
-        "default_value": null,
-        "max_length": null,
-        "numeric_precision": 10,
-        "numeric_scale": 0,
-        "is_nullable": false,
-        "is_primary_key": true,
-        "has_auto_increment": true,
-        "foreign_key_column": null,
-        "foreign_key_table": null,
-        "comment": ""
-      },
-      "meta": {
-        "collection": "notices",
-        "display": null,
-        "display_options": null,
-        "field": "id",
-        "group": null,
-        "hidden": true,
-        "id": 83,
-        "interface": "numeric",
-        "locked": false,
-        "note": null,
-        "options": null,
-        "readonly": true,
-        "sort": 1,
-        "special": null,
-        "translations": null,
-        "width": "full"
-      }
-    },
-    {
-      "collection": "notices",
-      "field": "user_created",
-      "type": "string",
-      "schema": {
-        "name": "user_created",
-        "table": "notices",
-        "data_type": "char",
-        "default_value": null,
-        "max_length": 36,
-        "numeric_precision": null,
-        "numeric_scale": null,
-        "is_nullable": true,
-        "is_primary_key": false,
-        "has_auto_increment": false,
-        "foreign_key_column": null,
-        "foreign_key_table": null,
-        "comment": ""
-      },
-      "meta": {
-        "collection": "notices",
-        "display": "user",
-        "display_options": null,
-        "field": "user_created",
-        "group": null,
-        "hidden": true,
-        "id": 84,
-        "interface": "user",
-        "locked": false,
-        "note": null,
-        "options": {
-          "display": "both"
-        },
-        "readonly": true,
-        "sort": 4,
-        "special": [
-          "user-created"
-        ],
-        "translations": null,
-        "width": "half"
-      }
-    },
-    {
-      "collection": "notices",
-      "field": "user_updated",
-      "type": "string",
-      "schema": {
-        "name": "user_updated",
-        "table": "notices",
-        "data_type": "char",
-        "default_value": null,
-        "max_length": 36,
-        "numeric_precision": null,
-        "numeric_scale": null,
-        "is_nullable": true,
-        "is_primary_key": false,
-        "has_auto_increment": false,
-        "foreign_key_column": null,
-        "foreign_key_table": null,
-        "comment": ""
-      },
-      "meta": {
-        "collection": "notices",
-        "display": "user",
-        "display_options": null,
-        "field": "user_updated",
-        "group": null,
-        "hidden": true,
-        "id": 86,
-        "interface": "user",
-        "locked": false,
-        "note": null,
-        "options": {
-          "display": "both"
-        },
-        "readonly": true,
-        "sort": 6,
-        "special": [
-          "user-updated"
-        ],
-        "translations": null,
-        "width": "half"
-      }
-    }, {
-      "field": "latitude",
-      "meta": {
-          "display": "raw",
-          "display_options": null,
-          "hidden": false,
-          "interface": "numeric",
-          "options": {
-              "step": 0
-          },
-          "readonly": false,
-          "special": null,
-          "translations": [
-              {
-                  "language": "en-US",
-                  "translation": "Latitude"
-              },
-              {
-                  "language": "tr-TR",
-                  "translation": "Enlem"
-              }
-          ]
-      },
-      "schema": {
-          "is_nullable": true,
-          "numeric_precision": null,
-          "numeric_scale": 6
-      },
-      "type": "decimal"
-    }, {
-      "field": "longitude",
-      "meta": {
-          "display": "raw",
-          "display_options": null,
-          "hidden": false,
-          "interface": "numeric",
-          "options": {
-              "step": 0
-          },
-          "readonly": false,
-          "special": null,
-          "translations": [
-              {
-                  "language": "en-US",
-                  "translation": "Longitude"
-              },
-              {
-                  "language": "tr-TR",
-                  "translation": "Boylam"
-              }
-          ]
-      },
-      "schema": {
-          "is_nullable": true,
-          "numeric_precision": null,
-          "numeric_scale": 6
-      },
-      "type": "decimal"
-    }
-  ],
-  "meta": {
-    "singleton": false
-  }
-}
-
-const addCategoryFieldData = {
-  "field": "category",
-  "type": "integer",
-  "schema": {
-    "is_nullable": false,
-    "numeric_precision": null,
-    "numeric_scale": null
-  },
-  "meta": {
-    "hidden": false,
-    "interface": "many-to-one",
-    "options": { "template": "{{title}}" },
-    "display": "related-values",
-    "display_options": { "template": "{{title}}" },
-    "readonly": false,
-    "translations": [{
-      "language": "en-US",
-      "translation": "Category"
-    }, {
-      "language": "tr-TR",
-      "translation": "Kategori"
-    }]
-  }
-}
-
-const addCategoryRelationData = {
-  "many_collection": "notices",
-  "many_field": "category",
-  "many_primary": "id",
-  "one_collection": "categories",
-  "one_primary": "id"
-}
-
-const createNoticeDirectusFilesCollectionData = {
-  "collection": "notice_directus_files_2",
-  "meta": {
-      "hidden": true,
-      "icon": "import_export"
-  },
-  "fields": [
-      {
-          "field": "id",
-          "type": "integer",
-          "schema": {
-              "has_auto_increment": true
-          },
-          "meta": {
-              "hidden": true
-          }
-      },
-      {
-        "field": "notice_id",
-        "meta": {
-            "hidden": true
-        },
-        "schema": {},
-        "type": "integer"
-      },
-      {
-        "field": "directus_files_id",
-        "meta": {
-            "hidden": true
-        },
-        "schema": {},
-        "type": "uuid"
-    }
-  ]
-}
-
-const addNoticeFileRelationData = {
-  "junction_field": "directus_files_id",
-  "many_collection": createNoticeDirectusFilesCollectionData.collection,
-  "many_field": "notice_id",
-  "many_primary": "id",
-  "one_collection": "notices",
-  "one_field": "images",
-  "one_primary": "id"
-}
-
-const addFileRelationData = {
-  "junction_field": "notice_id",
-  "many_collection": createNoticeDirectusFilesCollectionData.collection,
-  "many_field": "directus_files_id",
-  "many_primary": "id",
-  "one_collection": "directus_files",
-  "one_field": null,
-  "one_primary": "id"
+    await collectionsService.delete(data.collections.notices.collection)
+    await collectionsService.delete(data.collections.noticeImages.collection)
+  })())
+    .then(next)
+    .catch(next)
 }
